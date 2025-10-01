@@ -51,7 +51,8 @@ export const LevelSelectScreen: React.FC = () => {
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           {LEVELS.map((level, index) => {
-            const isLocked = index > 0 && !starsByLevel[LEVELS[index - 1].id];
+            // const isLocked = index > 0 && !starsByLevel[LEVELS[index - 1].id];
+            const isLocked = false;
             const stars = starsByLevel[level.id] || 0;
             
             return (

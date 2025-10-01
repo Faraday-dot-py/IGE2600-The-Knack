@@ -56,7 +56,7 @@ const DIALOGUE_EXCHANGES: DialogueExchange[] = [
     choices: [
       {
         id: "detailed",
-        text: "Optimized my home network and reorganized my component drawers.",
+        text: "Did a stress-test on my home server, almost accidentally directed it to my AWS instance.",
         type: "literal",
         moodEffect: -1,
         authenticity: true

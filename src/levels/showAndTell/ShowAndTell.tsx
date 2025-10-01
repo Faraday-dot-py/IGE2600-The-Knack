@@ -9,276 +9,374 @@ interface ShowAndTellProps {
   timeElapsed: number;
 }
 
+type ChoiceType = 'achievement-heavy' | 'process-focused' | 'self-erase' | 'people-pleaser';
+
 interface DialogueChoice {
   id: string;
   text: string;
-  type: 'achievement-heavy' | 'process-focused' | 'self-erase';
-  ssEffect: number; // Social Standing effect
-  pcEffect: number; // Personal Contentment effect
-  authenticity?: boolean;
-  description?: string; // What this choice represents
+  type: ChoiceType;
+  /** Social Standing effect (may be 0 on best choices) */
+  ssEffect: number;
+  /** Personal Contentment effect */
+  pcEffect: number;
+  /** Marks the “best” responses that raise PC but leave SS unchanged */
+  best?: boolean;
+  /** Optional flavor tag shown in history */
+  description?: string;
+  /** Next dialogue node id to branch to */
+  nextId?: string;
 }
 
 interface DialogueExchange {
-  id: number;
+  id: string;
   prompt: string;
+  context?: string;
   choices: DialogueChoice[];
-  context?: string; // Additional context about the situation
 }
 
-const DIALOGUE_EXCHANGES: DialogueExchange[] = [
-  {
-    id: 1,
+/** Dialogue graph: branches adapt to earlier choices. */
+const DIALOGUE: Record<string, DialogueExchange> = {
+  start: {
+    id: 'start',
     prompt: "What've you been working on lately?",
-    context: "A colleague notices you've been busy and asks about your projects",
+    context: 'A colleague notices you’ve been busy and asks about your projects.',
     choices: [
       {
-        id: "showcase",
-        text: "I built a robotic hand that can pick up a grape without crushing it. Watch this!",
-        type: "achievement-heavy",
+        id: 'showcase',
+        text: 'I built a hand that can pick up a grape without crushing it.',
+        type: 'achievement-heavy',
         ssEffect: -2,
         pcEffect: 1,
-        description: "Leading with the impressive result"
+        description: 'Leads with the impressive result',
+        nextId: 'impressedDistant',
       },
       {
-        id: "process",
-        text: "I got stuck on tendon routing for weeks, then learned this neat trick from biomechanics. Want to see?",
-        type: "process-focused",
-        ssEffect: 2,
+        id: 'processInvite',
+        text: 'I got stuck on tendon routing for weeks, learned a neat trick from biomechanics—want to see?',
+        type: 'process-focused',
+        ssEffect: 0, // best: PC only
+        pcEffect: 3,
+        best: true,
+        description: 'Shares journey + invites them in',
+        nextId: 'curiousEngaged',
+      },
+      {
+        id: 'deflect',
+        text: 'Nothing special, just tinkering.',
+        type: 'self-erase',
+        ssEffect: -1,
+        pcEffect: -2,
+        description: 'Downplays and closes the door',
+        nextId: 'awkwardChange',
+      },
+    ],
+  },
+
+  curiousEngaged: {
+    id: 'curiousEngaged',
+    prompt: 'Wow, how did you even start something like that?',
+    context: 'They’re sincerely curious, leaning in.',
+    choices: [
+      {
+        id: 'relatableStart',
+        text: 'Honestly? I kept dropping things. I started with just one finger.',
+        type: 'process-focused',
+        ssEffect: 0, // best: PC only
         pcEffect: 2,
-        description: "Sharing the journey and inviting engagement"
+        best: true,
+        description: 'Relatable detail; keeps them engaged',
+        nextId: 'plansEngaged',
       },
       {
-        id: "deflect",
-        text: "Nothing special, just tinkering with some stuff.",
-        type: "self-erase",
+        id: 'technicalDive',
+        text: 'I analyzed grip force distributions and modeled tendon mechanics in CAD…',
+        type: 'achievement-heavy',
+        ssEffect: -1,
+        pcEffect: 2, // authentic tech detail feels good to you
+        description: 'Accurate but risks overwhelming them',
+        nextId: 'plansTech',
+      },
+      {
+        id: 'dismissComplexity',
+        text: 'It’s not that complex once you break it down.',
+        type: 'self-erase',
+        ssEffect: -1,
+        pcEffect: -1,
+        description: 'Minimizes your effort',
+        nextId: 'awkwardChange',
+      },
+    ],
+  },
+
+  impressedDistant: {
+    id: 'impressedDistant',
+    prompt: "That's really complex! How did you even start?",
+    context: 'They’re impressed but a bit intimidated—distance forming.',
+    choices: [
+      {
+        id: 'humanReframe',
+        text: 'I started tiny—one joint at a time. The tricky bit was routing the string cleanly.',
+        type: 'process-focused',
+        ssEffect: 0, // best: PC only
+        pcEffect: 2,
+        best: true,
+        description: 'Reframes in approachable terms',
+        nextId: 'plansEngaged',
+      },
+      {
+        id: 'deepTech',
+        text: 'I ran FEA on tendon paths and tuned compliance—happy to show the graphs.',
+        type: 'achievement-heavy',
+        ssEffect: -1,
+        pcEffect: 2,
+        description: 'Authentic tech joy; may alienate',
+        nextId: 'plansTech',
+      },
+      {
+        id: 'minimize',
+        text: 'Eh, it’s nothing, really.',
+        type: 'self-erase',
+        ssEffect: -1,
+        pcEffect: -2,
+        description: 'Shuts the door on connection',
+        nextId: 'awkwardChange',
+      },
+    ],
+  },
+
+  awkwardChange: {
+    id: 'awkwardChange',
+    prompt: 'Oh, cool. Anyway…',
+    context: 'They start drifting away from the topic.',
+    choices: [
+      {
+        id: 'inviteThem',
+        text: 'What kind of things do you like to build or fix?',
+        type: 'people-pleaser',
+        ssEffect: 2, // pleases them socially
+        pcEffect: -1, // costs you (masking/deflection)
+        description: 'Shifts focus to keep peace',
+        nextId: 'plansEngaged',
+      },
+      {
+        id: 'stayAuthenticSmall',
+        text: 'No worries—I can show you the simple version later if you want.',
+        type: 'process-focused',
+        ssEffect: 0, // best: PC only
+        pcEffect: 1,
+        best: true,
+        description: 'Keeps door open without self-erasing',
+        nextId: 'plansEngaged',
+      },
+      {
+        id: 'bowOut',
+        text: 'Yeah, let’s talk about something else.',
+        type: 'self-erase',
         ssEffect: 0,
         pcEffect: -2,
-        description: "Downplaying your work"
-      }
-    ]
+        description: 'Drops the thread entirely',
+        nextId: 'end',
+      },
+    ],
   },
-  {
-    id: 2,
-    prompt: "Wow, that's really complex! How did you even start something like that?",
-    context: "They seem genuinely interested but maybe intimidated",
+
+  plansEngaged: {
+    id: 'plansEngaged',
+    prompt: 'Are you planning to do anything with it? Like sell it or something?',
+    context: 'They’re trying to understand your motivation.',
     choices: [
       {
-        id: "technical",
-        text: "First I analyzed grip force distributions, then modeled the tendon mechanics in CAD...",
-        type: "achievement-heavy",
-        ssEffect: -1,
-        pcEffect: 0,
-        authenticity: true,
-        description: "Technical deep-dive (authentic but overwhelming)"
-      },
-      {
-        id: "relatable",
-        text: "Honestly? I kept dropping things and got frustrated. Started small with just one finger.",
-        type: "process-focused",
-        ssEffect: 1,
-        pcEffect: 1,
-        description: "Making it relatable and human"
-      },
-      {
-        id: "dismiss",
-        text: "Oh, it's not that complex once you break it down.",
-        type: "self-erase",
-        ssEffect: -1,
-        pcEffect: -1,
-        description: "Minimizing the achievement"
-      }
-    ]
-  },
-  {
-    id: 3,
-    prompt: "That's so cool! I could never do anything like that.",
-    context: "They're expressing admiration but also creating distance",
-    choices: [
-      {
-        id: "superior",
-        text: "It just takes the right mindset and understanding the physics involved.",
-        type: "achievement-heavy",
-        ssEffect: -3,
-        pcEffect: -1,
-        description: "Implying they lack the 'right mindset'"
-      },
-      {
-        id: "encouraging",
-        text: "I bet you could! What kind of things do you like to build or fix?",
-        type: "process-focused",
-        ssEffect: 2,
-        pcEffect: 1,
-        description: "Turning focus to their interests"
-      },
-      {
-        id: "agree",
-        text: "Yeah, it's probably not for everyone.",
-        type: "self-erase",
-        ssEffect: -2,
-        pcEffect: -2,
-        authenticity: true,
-        description: "Accidentally reinforcing their self-doubt"
-      }
-    ]
-  },
-  {
-    id: 4,
-    prompt: "Are you planning to do anything with it? Like sell it or something?",
-    context: "They're trying to understand your motivation",
-    choices: [
-      {
-        id: "ambitious",
-        text: "I'm thinking of patenting the grip algorithm and starting a robotics company.",
-        type: "achievement-heavy",
-        ssEffect: -1,
-        pcEffect: 1,
-        authenticity: true,
-        description: "Sharing big ambitions (authentic excitement)"
-      },
-      {
-        id: "learning",
-        text: "Maybe someday, but right now I'm just learning and having fun with it.",
-        type: "process-focused",
-        ssEffect: 1,
+        id: 'learningFun',
+        text: 'Maybe later. Right now I’m learning and having fun.',
+        type: 'process-focused',
+        ssEffect: 0, // best: PC only
         pcEffect: 2,
-        description: "Focusing on intrinsic motivation"
+        best: true,
+        description: 'Intrinsic motivation',
+        nextId: 'end',
       },
       {
-        id: "hobby",
-        text: "Nah, it's just a hobby thing. Nothing serious.",
-        type: "self-erase",
+        id: 'bigAmbition',
+        text: 'I might patent part of it and explore a small product.',
+        type: 'achievement-heavy',
+        ssEffect: -1,
+        pcEffect: 2, // authentic excitement
+        description: 'Ambition risks being read as bragging',
+        nextId: 'end',
+      },
+      {
+        id: 'justHobby',
+        text: 'Nah, just a hobby. Nothing serious.',
+        type: 'self-erase',
         ssEffect: 0,
         pcEffect: -3,
-        description: "Diminishing your passion"
-      }
-    ]
-  }
-];
+        description: 'Diminishes your passion',
+        nextId: 'end',
+      },
+    ],
+  },
+
+  plansTech: {
+    id: 'plansTech',
+    prompt: 'So… what’s the endgame for this?',
+    context: 'They sound cautious after the tech dive.',
+    choices: [
+      {
+        id: 'shareWhy',
+        text: 'It helps me think. Building it was the point.',
+        type: 'process-focused',
+        ssEffect: 0, // best: PC only
+        pcEffect: 2,
+        best: true,
+        description: 'Purpose > prestige',
+        nextId: 'end',
+      },
+      {
+        id: 'sellIt',
+        text: 'Maybe turn it into a product if the prototype holds up.',
+        type: 'achievement-heavy',
+        ssEffect: -1,
+        pcEffect: 2,
+        description: 'Ambition with a caveat',
+        nextId: 'end',
+      },
+      {
+        id: 'downplay',
+        text: 'It’s probably not useful anyway.',
+        type: 'self-erase',
+        ssEffect: 0,
+        pcEffect: -2,
+        description: 'Self-sabotaging',
+        nextId: 'end',
+      },
+    ],
+  },
+
+  end: {
+    id: 'end',
+    prompt: '',
+    choices: [],
+  },
+};
 
 export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapsed }) => {
-  const [currentExchange, setCurrentExchange] = useState(0);
-  const [partnerReaction, setPartnerReaction] = useState(0); // -5 to +5 scale
+  const [currentId, setCurrentId] = useState<string>('start');
+  const [partnerReaction, setPartnerReaction] = useState(0); // -5 .. +5
   const [attempts, setAttempts] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<Array<{prompt: string, choice: DialogueChoice}>>([]);
-  const [authenticChoices, setAuthenticChoices] = useState(0);
-  const [totalPCEffect, setTotalPCEffect] = useState(0);
-  const [totalSSEffect, setTotalSSEffect] = useState(0);
-  const [projectShown, setProjectShown] = useState(false);
+  const [history, setHistory] = useState<Array<{ prompt: string; choice: DialogueChoice }>>([]);
+  const [pcTotal, setPcTotal] = useState(0);
+  const [ssTotal, setSsTotal] = useState(0);
+  const [bestPicks, setBestPicks] = useState(0);
+  const [sharedSubstance, setSharedSubstance] = useState(false); // did they actually share something meaningful?
 
-  // Show hint after 25 seconds
+  const node = DIALOGUE[currentId];
+
+  // Hint appears after 25s if still talking
   useEffect(() => {
-    if (timeElapsed >= 25 && !isComplete && !showHint && currentExchange < DIALOGUE_EXCHANGES.length) {
+    if (timeElapsed >= 25 && currentId !== 'end' && !showHint) {
       setShowHint(true);
     }
-  }, [timeElapsed, isComplete, showHint, currentExchange]);
+  }, [timeElapsed, currentId, showHint]);
+
+  const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
   const handleChoice = (choice: DialogueChoice) => {
-    const exchange = DIALOGUE_EXCHANGES[currentExchange];
-    
-    // Update conversation history
-    setConversationHistory(prev => [...prev, { prompt: exchange.prompt, choice }]);
-    
-    // Update reaction and effects
-    setPartnerReaction(prev => Math.max(-5, Math.min(5, prev + choice.ssEffect)));
-    setTotalPCEffect(prev => prev + choice.pcEffect);
-    setTotalSSEffect(prev => prev + choice.ssEffect);
-    
-    // Track authentic choices
-    if (choice.authenticity) {
-      setAuthenticChoices(prev => prev + 1);
+    if (!node) return;
+
+    // Record history
+    setHistory((prev) => [...prev, { prompt: node.prompt, choice }]);
+
+    // Update reaction and totals
+    setPartnerReaction((prev) => clamp(prev + choice.ssEffect, -5, 5));
+    setPcTotal((prev) => prev + choice.pcEffect);
+    setSsTotal((prev) => prev + choice.ssEffect);
+
+    // Track “best” picks and substance sharing
+    if (choice.best) setBestPicks((p) => p + 1);
+    if (choice.type === 'process-focused' || choice.type === 'people-pleaser' || choice.type === 'achievement-heavy') {
+      setSharedSubstance(true);
     }
 
-    // Track if we've shown the project (process-focused choices in first exchange)
-    if (currentExchange === 0 && choice.type === 'process-focused') {
-      setProjectShown(true);
-    }
-    
-    // Increment attempts
-    setAttempts(prev => prev + 1);
+    setAttempts((a) => a + 1);
     setShowHint(false);
 
-    // Check if reaction dropped too low (severe failure)
-    const newReaction = Math.max(-5, Math.min(5, partnerReaction + choice.ssEffect));
+    // Severe misread → early end
+    const newReaction = clamp(partnerReaction + choice.ssEffect, -5, 5);
     if (newReaction <= -4) {
-      // You've been perceived as bragging/showing off
-      setIsComplete(true);
-      const result: PuzzleResult = {
-        stars: 0,
-        pcDelta: -8,
-        ssDelta: -8,
-        timeElapsed,
-        attempts,
-        hintsUsed,
-      };
-      setTimeout(() => onComplete(result), 2000);
+      finishConversation(0);
       return;
     }
 
-    // Move to next exchange or complete
-    if (currentExchange < DIALOGUE_EXCHANGES.length - 1) {
-      setTimeout(() => setCurrentExchange(prev => prev + 1), 1500);
+    // Advance
+    const nextId = choice.nextId ?? 'end';
+    if (!nextId || nextId === 'end') {
+      finishConversation();
     } else {
-      // Conversation completed successfully
-      setIsComplete(true);
-      const stars = calculateStars();
-      const deltas = getScoreDeltas(stars);
-      const result: PuzzleResult = {
-        stars,
-        pcDelta: deltas.pc,
-        ssDelta: deltas.ss,
-        timeElapsed,
-        attempts,
-        hintsUsed,
-      };
-      setTimeout(() => onComplete(result), 2000);
+      // slight pause for animation feel
+      setTimeout(() => setCurrentId(nextId), 600);
     }
+  };
+
+  const finishConversation = (forcedStars?: 0 | 1 | 2 | 3) => {
+    // Stars: feedback only (not the meter math)
+    const stars = typeof forcedStars === 'number' ? forcedStars : calculateStars();
+    const deltas = getScoreDeltas(); // derived solely from choices to respect PC-only best rule
+
+    const result: PuzzleResult = {
+      stars,
+      pcDelta: deltas.pc,
+      ssDelta: deltas.ss,
+      timeElapsed,
+      attempts,
+      hintsUsed,
+    };
+
+    // brief result reveal
+    setCurrentId('end');
+    setTimeout(() => onComplete(result), 900);
   };
 
   const handleHint = () => {
-    setHintsUsed(prev => prev + 1);
+    setHintsUsed((h) => h + 1);
     setShowHint(false);
   };
 
+  /** Stars are for UI satisfaction, not meter deltas */
   const calculateStars = (): 0 | 1 | 2 | 3 => {
-    let stars = 3;
-    
-    if (timeElapsed > 60) stars -= 1;
-    if (timeElapsed > 90) stars -= 1;
-    if (attempts > 6) stars -= 1;
-    if (hintsUsed > 0) stars -= 1;
-    if (partnerReaction < 0) stars -= 1; // Ended with negative reaction
-    if (!projectShown) stars -= 1; // Failed to actually share the project
-    
-    return Math.max(0, stars) as 0 | 1 | 2 | 3;
+    let s = 3;
+    if (timeElapsed > 60) s -= 1;
+    if (timeElapsed > 90) s -= 1;
+    if (attempts > 6) s -= 1;
+    if (hintsUsed > 0) s -= 1;
+    if (partnerReaction < 0) s -= 1;
+    if (!sharedSubstance) s -= 1;
+    return clamp(s, 0, 3) as 0 | 1 | 2 | 3;
   };
 
-  const getScoreDeltas = (stars: number) => {
-    const baseDeltas: Record<number, { pc: number; ss: number }> = {
-      3: { pc: 5, ss: 15 },
-      2: { pc: 3, ss: 10 },
-      1: { pc: 2, ss: 6 },
-      0: { pc: -8, ss: -8 }
-    };
-    
-    let deltas = baseDeltas[stars] || baseDeltas[0];
-    
-    // Add accumulated effects from choices
-    deltas.pc += totalPCEffect;
-    deltas.ss += totalSSEffect;
-    
-    // Authenticity bonus/penalty (for being genuinely excited about your work)
-    if (authenticChoices >= 1) {
-      deltas = {
-        pc: deltas.pc + 8,
-        ss: deltas.ss - 6
-      };
+  /**
+   * Meter deltas:
+   * - Sum of choice effects.
+   * - Best-path ribbon: picking ≥2 “best” choices grants small extra PC (+3) with **no SS change**.
+   * - Soft guardrail: if PC gained a lot, do not let SS climb in the same scene (already mostly ensured by choice design).
+   */
+  const getScoreDeltas = () => {
+    let pc = pcTotal;
+    let ss = ssTotal;
+
+    if (bestPicks >= 2) {
+      pc += 3; // reward sustained authenticity
+      // ss unchanged by design
     }
-    
-    return deltas;
+
+    // Final guardrail to avoid SS+PC both being high from odd paths:
+    // If PC ended significantly positive (≥5), cap SS gain at max(0, ss) = 0.
+    if (pc >= 5 && ss > 0) {
+      ss = 0;
+    }
+
+    return { pc, ss };
   };
 
   const getReactionEmoji = () => {
@@ -294,11 +392,13 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
     if (partnerReaction >= 1) return 'Interested';
     if (partnerReaction >= -1) return 'Polite';
     if (partnerReaction >= -3) return 'Uncomfortable';
-    return 'Thinks You\'re Bragging';
+    return "Thinks you're bragging";
   };
 
+  const isComplete = currentId === 'end';
+
   if (isComplete) {
-    const success = partnerReaction >= 0 && projectShown;
+    const success = partnerReaction >= 0 && sharedSubstance;
     return (
       <div className="show-and-tell">
         <motion.div
@@ -309,22 +409,20 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
         >
           <div className={`result-content ${success ? 'success' : 'failure'}`}>
             <h2>
-              {success ? '✅ Shared Successfully' : 
-               partnerReaction <= -4 ? '😬 Came Off as Bragging' : 
-               !projectShown ? '😔 Missed the Opportunity' : 
-               '😐 Mixed Results'}
+              {success ? '✅ Shared Successfully' :
+                partnerReaction <= -4 ? '😬 Came Off as Bragging' :
+                !sharedSubstance ? '😔 Missed the Opportunity' :
+                '😐 Mixed Results'}
             </h2>
             <div className="final-reaction">
               <span className="reaction-emoji">{getReactionEmoji()}</span>
               <span>Their reaction: {getReactionText()}</span>
             </div>
-            {projectShown && (
-              <div className="project-status">
-                ✅ You shared your project and process
-              </div>
+            {sharedSubstance && (
+              <div className="project-status">✅ You shared your project and process</div>
             )}
             <div className="reflection">
-              <p><em>"Sharing joy reads different depending on who's listening."</em></p>
+              <p><em>"Sharing joy reads different depending on who’s listening."</em></p>
             </div>
           </div>
         </motion.div>
@@ -332,7 +430,7 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
     );
   }
 
-  const exchange = DIALOGUE_EXCHANGES[currentExchange];
+  const exchange = node;
 
   return (
     <div className="show-and-tell">
@@ -351,7 +449,7 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
             </div>
           </div>
           <div className="partner-info">
-            <div className="avatar">👨‍💼</div>
+            <div className="avatar">👤</div>
             <div className="reaction-indicator">
               <span className="reaction-emoji">{getReactionEmoji()}</span>
               <span className="reaction-text">{getReactionText()}</span>
@@ -360,25 +458,24 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
         </motion.div>
 
         <div className="conversation-area">
-          {/* Context display */}
           <div className="context-display">
-            <p>{exchange.context}</p>
+            <p>{exchange?.context}</p>
           </div>
 
           {/* Conversation history */}
           <div className="conversation-history">
-            {conversationHistory.map((item, index) => (
-              <div key={index} className="exchange-history">
+            {history.map((item, idx) => (
+              <div key={idx} className="exchange-history">
                 <div className="message message-them">
                   <div className="message-bubble">{item.prompt}</div>
                 </div>
                 <div className="message message-you">
-                  <div className={`message-bubble ${item.choice.authenticity ? 'authentic' : ''}`}>
+                  <div className={`message-bubble ${item.choice.best ? 'authentic' : ''}`}>
                     {item.choice.text}
                   </div>
-                  <div className="choice-effect">
-                    {item.choice.description}
-                  </div>
+                  {item.choice.description && (
+                    <div className="choice-effect">{item.choice.description}</div>
+                  )}
                 </div>
               </div>
             ))}
@@ -390,34 +487,36 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
               className="message message-them"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              key={`prompt-${currentExchange}`}
+              key={`prompt-${exchange?.id}`}
             >
-              <div className="message-bubble">{exchange.prompt}</div>
+              <div className="message-bubble">{exchange?.prompt}</div>
             </motion.div>
 
             <motion.div
               className="choices-container"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.2 }}
             >
               <div className="choices-prompt">How do you respond?</div>
               <div className="choices">
-                {exchange.choices.map((choice, index) => (
+                {exchange?.choices.map((choice, index) => (
                   <motion.button
                     key={choice.id}
-                    className={`choice-button ${choice.type} ${choice.authenticity ? 'authentic-choice' : ''}`}
+                    className={`choice-button ${choice.type} ${choice.best ? 'authentic-choice' : ''}`}
                     onClick={() => handleChoice(choice)}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 + index * 0.1 }}
+                    transition={{ delay: 0.25 + index * 0.05 }}
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <div className="choice-text">{choice.text}</div>
-                    <div className="choice-description">{choice.description}</div>
-                    {choice.authenticity && (
-                      <div className="authenticity-badge">Genuine Excitement</div>
+                    {choice.description && (
+                      <div className="choice-description">{choice.description}</div>
+                    )}
+                    {choice.best && (
+                      <div className="authenticity-badge">Authentic (PC ↑, SS —)</div>
                     )}
                   </motion.button>
                 ))}
@@ -435,10 +534,8 @@ export const ShowAndTell: React.FC<ShowAndTellProps> = ({ onComplete, timeElapse
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
             >
-              <p>💡 Share the journey and struggles, not just the results. Ask about their interests too.</p>
-              <Button onClick={handleHint} variant="secondary">
-                Got it!
-              </Button>
+              <p>💡 Share the journey and what it means to you. Keep it approachable. Asking a sincere question back often helps.</p>
+              <Button onClick={handleHint} variant="secondary">Got it!</Button>
             </motion.div>
           )}
         </AnimatePresence>

@@ -48,12 +48,12 @@ export const LEVELS: Level[] = [
     meterEffects: {
       base: { PC: 15, SS: 5 }, // 3 star mechanical success
     },
-    reflectionLine: "When the path is clear, power flows."
+    reflectionLine: "Why don't we tinker a bit?"
   },
   {
     id: 'showAndTell',
     type: 'social',
-    title: 'Show & Tell (...or Brag?)',
+    title: 'Show & Tell',
     goal: 'Share your cool project without being perceived as bragging.',
     timerTargetSec: 60,
     scoring: {
