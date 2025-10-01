@@ -1,0 +1,112 @@
+.level-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.level-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.level-info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.level-title {
+  font-size: 1.5rem;
+  margin: 0 0 4px 0;
+  color: #333;
+  font-weight: 700;
+}
+
+.level-goal {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.level-hud {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.meters {
+  display: flex;
+  gap: 16px;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.timer-label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.timer-value {
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.level-nav {
+  display: flex;
+  align-items: center;
+}
+
+.level-main {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.level-error {
+  text-align: center;
+  color: white;
+  padding: 40px;
+}
+
+.level-error h2 {
+  margin: 0 0 20px 0;
+  font-size: 2rem;
+}
+
+@media (max-width: 768px) {
+  .level-header {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .level-hud {
+    justify-content: center;
+  }
+  
+  .meters {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .level-title {
+    font-size: 1.3rem;
+  }
+}

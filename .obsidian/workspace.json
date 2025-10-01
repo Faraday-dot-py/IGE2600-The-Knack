@@ -1,0 +1,188 @@
+{
+  "main": {
+    "id": "a10bc55b9c99139c",
+    "type": "split",
+    "children": [
+      {
+        "id": "2798f747775fbcbe",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1b65c57ddd3d6435",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "writeup.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "writeup"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c1111e8f5cf9dcaa",
+    "type": "split",
+    "children": [
+      {
+        "id": "fa487212a8313d70",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6df576298d4823f6",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "9cc8750bfddc441d",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "5667309d1f22dd69",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "cd5c60cd8416bb8e",
+    "type": "split",
+    "children": [
+      {
+        "id": "04ad806f0839915a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "eedc41c0c06a5ad9",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "writeup.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for writeup"
+            }
+          },
+          {
+            "id": "9f97ecd18bde1d1a",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "writeup.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from writeup"
+            }
+          },
+          {
+            "id": "48a67c1a9acb8813",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "fd3c5685bb70e549",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "writeup.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of writeup"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "1b65c57ddd3d6435",
+  "lastOpenFiles": [
+    "the-knack/src/levels/showAndTell/index.ts",
+    "the-knack/src/levels/showAndTell/ShowAndTell.css",
+    "IGE2600-The-Knack",
+    "the-knack/src/levels/smallTalk/index.ts",
+    "the-knack/src/levels/printerPanic/index.ts",
+    "the-knack/design_doc_the_knack_a_60_second_micro_puzzle_autoethnography_web_game (2).md",
+    "the-knack/dist/index.html",
+    "the-knack/dist/assets/index-CnK-yJW7.js",
+    "the-knack/dist/assets/index-BZBU4gqM.css",
+    "the-knack/dist/assets",
+    "the-knack/dist/vite.svg",
+    "the-knack/dist",
+    "the-knack/src/levels/LevelWrapper.tsx"
+  ]
+}

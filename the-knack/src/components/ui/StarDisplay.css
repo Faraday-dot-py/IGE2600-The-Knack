@@ -1,0 +1,30 @@
+.stars {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.star {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.star--filled {
+  color: #ffd700;
+}
+
+.star--empty {
+  color: #ddd;
+}
+
+.stars--small .star {
+  font-size: 14px;
+}
+
+.stars--medium .star {
+  font-size: 16px;
+}
+
+.stars--large .star {
+  font-size: 20px;
+}

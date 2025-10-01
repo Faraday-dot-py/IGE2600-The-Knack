@@ -1,0 +1,32 @@
+.app {
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Global button styles that work with our custom Button component */
+button:focus-visible {
+  outline: 2px solid #646cff;
+  outline-offset: 2px;
+}
+
+/* Reset margins and ensure full height */
+body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Ensure clean typography across the app */
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0;
+  line-height: 1.5;
+}
